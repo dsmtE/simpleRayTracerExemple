@@ -29,6 +29,7 @@ private:
     void BuildScene();
 
     GLuint _textureId;
+    GLuint _framebufferId;
 
     size_t _colorBufferWidth;
     size_t _colorBufferHeight;

@@ -14,6 +14,11 @@ App::App(GLFWwindow* window) : _resolutionFactor(1.0f), _colorBuffer(nullptr) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // Generate framebuffer
+    glGenFramebuffers(1, &_framebufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, _framebufferId);  
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textureId, 0);  
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);  
 
     BuildScene();
     
@@ -62,15 +67,11 @@ void App::Render(GLFWwindow* window) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, static_cast<GLsizei>(_colorBufferWidth), static_cast<GLsizei>(_colorBufferHeight), 0, GL_RGB, GL_UNSIGNED_BYTE, glm::value_ptr(*_colorBuffer));
 
     // Render the texture on the screen
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, _textureId);
-    glBegin(GL_QUADS);
-        glTexCoord2d(0,0); glVertex2i(0, 0);
-        glTexCoord2d(1,0); glVertex2i(framebufferSize.x, 0);
-        glTexCoord2d(1,1); glVertex2i(framebufferSize.x, framebufferSize.y);
-        glTexCoord2d(0,1); glVertex2i(0, framebufferSize.y);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _framebufferId);  
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  
+    glBlitFramebuffer(0, 0, framebufferSize.x, framebufferSize.y, 
+                      0, 0, framebufferSize.x, framebufferSize.y,
+                      GL_COLOR_BUFFER_BIT, GL_NEAREST);
     
 }
 
