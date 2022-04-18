@@ -2,6 +2,12 @@
 
 #include "Sphere.hpp"
 
+struct IntersectionResult {
+    bool wasFound;
+    const Sphere* sphere;
+    float intersectionDistance;
+};
+
 class Ray {
 
 public:
@@ -10,7 +16,8 @@ public:
 
     Ray(glm::vec3 o, glm::vec3 d);
 
-    bool Intersect(Sphere sphere, glm::vec3& IntersectPosition) const;
-    bool Intersect(Sphere sphere, float& intersectionDistance) const;
+    IntersectionResult Intersect(const Sphere& sphere) const;
 };
+
+
 

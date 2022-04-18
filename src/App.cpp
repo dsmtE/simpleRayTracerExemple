@@ -31,6 +31,7 @@ void App::InitColorBuffer(const size_t& width, const size_t& height) {
     _colorBufferWidth = static_cast<size_t>(width*_resolutionFactor);
     _colorBufferHeight = static_cast<size_t>(height*_resolutionFactor);
     _colorBuffer = new glm::u8vec3[_colorBufferWidth * _colorBufferHeight];
+    RenderSceneToColorBuffer();
 }
 
 void App::BuildScene() {

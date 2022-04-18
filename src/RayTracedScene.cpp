@@ -4,24 +4,20 @@
 
 #include <iostream>
 #include <glm/gtc/constants.hpp>
-#include <glm/vector_relational.hpp>
 
-bool RayTracedScene::ThrowRayThrough(const Ray& ray, Sphere& hitSphere, glm::vec3& intersectPosition) {
-    bool intersect = false;
+IntersectionResult RayTracedScene::CastRayThrough(const Ray& ray) {
     float intersectionDistance = std::numeric_limits<float>().infinity();
-
-    for(Sphere s: _spheres) {
-        float t;
-        if(ray.Intersect(s, t) && t < intersectionDistance) {
-            intersectionDistance = t;
-            hitSphere = s;
-            intersect = true;
+    const Sphere* hitSphere = nullptr;
+    
+    for(const Sphere& s: _spheres) {
+        const auto intersection = ray.Intersect(s);
+        if(intersection.wasFound && intersection.intersectionDistance < intersectionDistance) {
+            intersectionDistance = intersection.intersectionDistance;
+            hitSphere = intersection.sphere;
         }
     }
-    
-    intersectPosition = ray.origin + intersectionDistance * ray.dir;
 
-    return intersect;
+    return {hitSphere != nullptr, hitSphere, intersectionDistance};
 }
 
 Ray RayTracedScene::BuildRayFromPixelCoordinate(const size_t& x, const size_t& y, const size_t& width, const size_t& height) {
@@ -29,7 +25,7 @@ Ray RayTracedScene::BuildRayFromPixelCoordinate(const size_t& x, const size_t& y
     
     float imageAspectRatio = width / (float)height; // assuming width > height 
 
-    glm::vec3 cameraPosition = glm::vec3(0.f, 0.f, 0.f);
+    glm::vec3 cameraPosition = glm::vec3(0.f);
     float cameraFovAngle = 90.f;
     
     glm::vec2 normalizeDeviceCoordinate = glm::vec2((x+0.5f)/width, (y+0.5f)/height);
@@ -53,16 +49,14 @@ void RayTracedScene::AddSphere(const glm::vec3& position, float radius, const gl
     _spheres.emplace_back(position, radius, color);
 }
 
-void RayTracedScene::RenderSceneInColorBuffer(glm::u8vec3* colorBuffer, const size_t& width, const size_t& height) {
+void RayTracedScene::RenderSceneInColorBuffer(glm::u8vec3* colorBuffer, const size_t& width, const size_t& height, const glm::u8vec3 clearColor) {
     for (size_t y = 0; y < height; ++y) {
         for (size_t x = 0; x < width; ++x) {
-            Ray r = BuildRayFromPixelCoordinate(x, y, width, height);
-
-            Sphere hitSphere(glm::vec3(0.f, 0.f, 0.f), 0.f, glm::u8vec3(0, 0, 0));
-            glm::vec3 intersectPosition;
-            if(ThrowRayThrough(r, hitSphere, intersectPosition)) {
-                colorBuffer[y*width+x] = hitSphere.color;
-            }
+            const Ray r = BuildRayFromPixelCoordinate(x, y, width, height);
+            const auto intersection = CastRayThrough(r);
+            // The position of the intersection can be computed like that if needed
+            // glm::vec3 intersectPosition = ray.origin + ray.dir * intersection.intersectionDistance;
+            colorBuffer[y*width+x] = intersection.wasFound ? intersection.sphere->color : clearColor;
         }
     }
 
